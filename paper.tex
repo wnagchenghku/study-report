@@ -400,7 +400,10 @@ hosts with 40Gbps network, and we spawned 24 concurrent consensus connections.
 As shown in Figure~\ref{fig:paxos_latency}, when changing the replica group 
 size from 3 to 9, although network and CPUs were not saturated, the consensus 
 latency of 3 protocols drastically increased by 105.4\% to 168.3\%, and 36.5\% 
-to 63.7\% of the increase was in OS kernel. When only one consensus connection 
+to 63.7\% of the increase was in OS kernel.
+
+
+When only one consensus connection 
 was spawned, the latency increase on the number of replicas was more gentle.
 
 This evaluation shows that both the number of concurrent requests and 
@@ -411,10 +414,11 @@ nine replicas) to support both replica failures and upgrades, the limited
 scalability in extant consensus protocols becomes even more pronounced.
 
 The second problem is that most existing \smr systems are not designed to 
-support unmodified server programs. To utilize existing \smr services such as 
-ZooKeeper~\cite{zookeeper}, developers often have to rewrite their code 
-to orchestrate server programs into the narrowly defined interfaces 
-provided by these \smr systems.
+support unmodified server programs. To utilize existing \smr services, 
+developers often have to rewrite their code to orchestrate server programs into 
+the narrowly defined interfaces provided by these \smr systems. For instance, 
+to leverage ZooKeeper~\cite{zookeeper}, developers have to shoehorn their 
+programs into the file IO interface defined by ZooKeeper.
 
 \end{sloppypar}
 
