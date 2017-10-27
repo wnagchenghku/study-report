@@ -363,8 +363,9 @@ high-availability service for general server programs. Unfortunately, despite
 much effort, existing \smr systems are still hard to deploy, mainly due to two 
 problems.
 
-First, the consensus latency of \paxos protocols is notoriously high and 
-unscalable~\cite{zookeeper,glendenning2011scalable}, incurring high 
+The first problem is performance. The consensus latency of \paxos protocols is 
+notoriously high and unscalable~\cite{zookeeper,glendenning2011scalable}, 
+incurring high 
 performance overhead for server programs. A main reason is that messages of 
 traditional TCP or UDP-based \paxos protocols have to go through software 
 network layers in OS kernels. For efficiency, \paxos 
@@ -409,10 +410,10 @@ tend to deploy more replicas (\eg, Azure~\cite{azure:book} deploys seven or
 nine replicas) to support both replica failures and upgrades, the limited 
 scalability in extant consensus protocols becomes even more pronounced.
 
-Second, most existing \smr systems are not desgined to support unmodified 
-server programs. To utilize existing \smr services such as 
-ZooKeeper~\cite{zookeeper}, developers often have to rewrite their code to 
-shoehorn their programs into the narrowly defined state machine interfaces 
+The second problem is that most existing \smr systems are not designed to 
+support unmodified server programs. To utilize existing \smr services such as 
+ZooKeeper~\cite{zookeeper}, developers often have to rewrite their code 
+to orchestrate server programs into the narrowly defined interfaces 
 provided by these \smr systems.
 
 \end{sloppypar}
