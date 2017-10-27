@@ -380,6 +380,11 @@ time of key-value store servers (\eg, \redis) is at most hundreds of \us,
 existing \paxos protocols incur high overhead in the response time of server 
 programs.
 
+\textbf{Poor scalability.} The consensus latency of extant consensus protocols 
+is often \emph{scale-limited}: it increases drastically when the number of 
+concurrent requests or replicas 
+increases~\cite{zookeeper,glendenning2011scalable}.
+
 \begin{figure*}[ht]
 \begin{center}
 \includegraphics{figures/paxos_latency}
@@ -387,11 +392,6 @@ programs.
 protocols ran a client with 24 concurrent connections.}\label{fig:paxos_latency}
 \end{center}
 \end{figure*}
-
-\textbf{Poor scalability.} The consensus latency of extant consensus protocols 
-is often \emph{scale-limited}: it increases drastically when the number of 
-concurrent requests or replicas 
-increases~\cite{zookeeper,glendenning2011scalable}.
 
 To quantify this problem, we evaluated four traditional consensus 
 protocols~\cite{zookeeper, spaxos:srds12, crane:sosp15, libpaxos} on 24-core 
