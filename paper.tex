@@ -28,6 +28,7 @@
 \usepackage{flushend}
 \usepackage{hhline}
 \usepackage{authblk}
+\usepackage{booktabs}
 %\newcommand{\doi}{XXXXXX}
 
 
@@ -93,7 +94,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     macro
 
-\newcommand{\xxx}[0]{\textsc{Crane}\xspace}
+\newcommand{\xxx}[0]{\textsc{APUS}\xspace}
 \newcommand{\paxos}[0]{\textsc{Paxos}\xspace}
 \newcommand{\mytitle}[0]{\textbf {Study Report}}
 \newcommand{\mykeywords}[0]{State Machine Replication, Fault Tolerance, Stable 
@@ -195,6 +196,9 @@ pdfdisplaydoctitle=true,
 \newcommand{\mysql}{\v{MySQL}\xspace}
 \newcommand{\sysbench}{\v{SysBench}\xspace}
 \newcommand{\zookeeper}{\v{ZooKeeper}\xspace}
+\newcommand{\libpaxos}{libPaxos\xspace}
+\newcommand{\spaxos}[0]{S-Paxos\xspace}
+\newcommand{\crane}[0]{CRANE\xspace}
 
 
 \newcommand{\aget}[0]{\v{aget}\xspace}
@@ -360,52 +364,98 @@ partition and packet loss.
 
 The fault-tolerant benefit of \smr makes it particularly an attractive 
 high-availability service for general server programs. Unfortunately, despite 
-much effort, existing \smr systems are still hard to deploy, mainly due to two 
-problems.
+much effort, existing \smr systems are still hard to deploy, mainly due to 
+three problems.
 
-The first problem is performance. The consensus latency of \paxos protocols is 
-notoriously high and unscalable~\cite{zookeeper,glendenning2011scalable}, 
-incurring high 
-performance overhead for server programs. A main reason is that messages of 
-traditional TCP or UDP-based \paxos protocols have to go through software 
-network layers in OS kernels. For efficiency, \paxos 
-protocols typically take the Multi-Paxos approach~\cite{paxos:simple}: it 
-assigns one replica as the ``leader'' to invoke consensus requests, and the 
-other replicas as ``backups'' to agree on requests. To agree on an input, at 
-least one round-trip time (RTT) is required between the leader and a backup. 
-Given that a ping RTT in LAN typically takes hundreds of \us, and that the 
-request processing time of key-value store servers (\eg, \redis) is at most 
-hundreds of \us, existing \paxos protocols incur high overhead in the response 
-time of server programs.
-
-Worse, the consensus latency of extant consensus protocols is often 
-\emph{scale-limited}: it increases drastically when the number of concurrent 
-requests or replicas increases. For instance, 
-Scatter~\cite{glendenning2011scalable} shows that the consensus latency of its 
-\paxos protocol increases by 1.6X when the number of replicas increases from 3 
-to 9.
+\textbf{High consensus latency.} The consensus latency of traditional \paxos 
+protocols is notoriously high, incurring high performance overhead for server 
+programs. A main reason is that messages of traditional TCP or UDP-based \paxos 
+protocols have to go through OS kernel. For efficiency, \paxos protocols 
+typically take the Multi-Paxos approach~\cite{paxos:simple}: it assigns one 
+replica as the ``leader'' to invoke consensus requests, and the other replicas 
+as ``backups'' to agree on requests. To agree on an input, at least one 
+round-trip time (RTT) is required between the leader and a backup. Given that a 
+ping RTT in LAN typically takes hundreds of \us, and that the request processing 
+time of key-value store servers (\eg, \redis) is at most hundreds of \us, 
+existing \paxos protocols incur high overhead in the response time of server 
+programs.
 
 \begin{figure*}[ht]
 \begin{center}
 \includegraphics{figures/paxos_latency}
 \caption{{\em Consensus latency of four existing consensus protocols.} All four 
-protocols ran a client with 24 concurrent connections. The Y axis is broken to 
-fit in all protocols.}\label{fig:paxos_latency}
+protocols ran a client with 24 concurrent connections.}\label{fig:paxos_latency}
 \end{center}
 \end{figure*}
 
-To quantify this bottleneck, we evaluated four traditional consensus 
+\textbf{Poor scalability.} The consensus latency of extant consensus protocols 
+is often \emph{scale-limited}: it increases drastically when the number of 
+concurrent requests or replicas 
+increases~\cite{zookeeper,glendenning2011scalable}.
+
+To quantify this problem, we evaluated four traditional consensus 
 protocols~\cite{zookeeper, spaxos:srds12, crane:sosp15, libpaxos} on 24-core 
-hosts with 40Gbps network, and we spawned 24 concurrent consensus connections. 
-As shown in Figure~\ref{fig:paxos_latency}, when changing the replica group 
-size from 3 to 9, although network and CPUs were not saturated, the consensus 
-latency of 3 protocols drastically increased by 105.4\% to 168.3\%, and 36.5\% 
-to 63.7\% of the increase was in OS kernel.
+hosts with 40Gbps network. For each protocol, we spawned 24 concurrent 
+consensus connections. As shown in Figure~\ref{fig:paxos_latency}, when 
+changing the replica group size from 3 to 9, the consensus latency of three 
+traditional protocols increased almost linearly to the number of replicas except 
+S-Paxos. S-Paxos batches requests from replicas and invokes consensus when the 
+batch is full. More replicas can take shorter time to form a batch, so S-Paxos 
+incurred a slightly better consensus latency with more replicas. Nevertheless, 
+its latency was always over 600\us.
 
+To find scalability bottlenecks in traditional protocols, we used only one 
+client connection and broke down their consensus latency on leader 
+(Table~\ref{tab:traditional-latency}). From 3 to 9 replicas, the consensus 
+latency (the ``Latency'' column) of these protocols increased more gently than 
+that on 24 concurrent connections. For instance, when the number of replicas 
+increased from three to nine, ZooKeeper latency increased by 30.3\% with one 
+connection; this latency increased by 168.3\% with 24 connections (Figure 1). 
+This indicates that concurrent consensus requests are the major scalability 
+bottleneck for these protocols.
 
-When only one consensus connection 
-was spawned, the latency increase on the number of replicas was more gentle.
+\begin{table}[h]
+\caption{{\em Performance breakdown of traditional protocols on leader
+with only one connection.} The ``Proto-\#Rep" column is the protocol name 
+and replica group size; ``Latency" is the consensus latency; ``First" 
+is the latency of leader's first received consensus reply; ``Major" is the
+latency of leader's consensus; ``Process" is leader's time spent in
+processing all replies; and ``Sys" is leader's time spent in systems (OS
+kernel, network stacks, and JVM) between the ``First" and ``Major" 
+reply. Times are in \us.}
+\label{tab:traditional-latency}
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+{\bf Proto-\#Rep} & {\bf Latency} & {\bf First} & {\bf Major} & {\bf
+Process}
+& {\bf Sys}\\
+\midrule
+\libpaxos-3 & 81.6 & 74.0  & 81.6 & 2.5 & 5.1\\
+\libpaxos-9 & 208.3 & 145.0  & 208.3 & 12.0 & 51.3\\
 
+\zookeeper-3 & 99.0 & 67.0  & 99.0 & 0.84 & 31.2\\
+\zookeeper-9 & 129.0 & 76.0  & 128.0 & 3.6 & 49.4\\
+
+\crane-3 & 78.0 & 69.0  & 69.0 & 13.0 & 0\\
+\crane-9 & 148.0 & 83.0  & 142.0 & 30.0 & 35.0\\
+
+\spaxos-3 & 865.1 & 846.0  & 846.0 & 20.0 & 0\\
+\spaxos-9 & 739.1 & 545.0  & 731.0 & 35.0 & 159.1\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Specifically, three protocols had scalable latency on the arrival of their 
+first consensus reply (the ``First'' column), which implies that network is not 
+saturated. \libpaxos is an exception because its two-round protocol consumed 
+much bandwidth. However, on the leader, there is a big gap between the arrival 
+of the first consensus reply and the ``majority'' reply (the ``Major'' column). 
+Given that the replies' CPU processing time was small (the ``Process'' column), 
+we can see that various systems layers, including OS kernel, network 
+libraries, and language runtimes (e.g., JVM), are another major scalable 
+bottleneck (the ``Sys'' column).
+ 
 This evaluation shows that both the number of concurrent requests and 
 replicas make consensus latency increase drastically. As modern server programs 
 tend to support more concurrent client connections, and advanced SMR systems 
@@ -413,7 +463,7 @@ tend to deploy more replicas (\eg, Azure~\cite{azure:book} deploys seven or
 nine replicas) to support both replica failures and upgrades, the limited 
 scalability in extant consensus protocols becomes even more pronounced.
 
-The second problem is that most existing \smr systems are not designed to 
+\textbf{Hard to use.} Most existing \smr systems are not designed to 
 support unmodified server programs. To utilize existing \smr services, 
 developers often have to rewrite their code to orchestrate server programs into 
 the narrowly defined interfaces provided by these \smr systems. For instance, 
