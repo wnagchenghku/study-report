@@ -195,10 +195,10 @@ pdfdisplaydoctitle=true,
 \newcommand{\ssdb}{\v{SSDB}\xspace}
 \newcommand{\mysql}{\v{MySQL}\xspace}
 \newcommand{\sysbench}{\v{SysBench}\xspace}
-\newcommand{\zookeeper}{\v{ZooKeeper}\xspace}
+\newcommand{\zookeeper}{ZooKeeper\xspace}
 \newcommand{\libpaxos}{libPaxos\xspace}
-\newcommand{\spaxos}[0]{S-Paxos\xspace}
-\newcommand{\crane}[0]{CRANE\xspace}
+\newcommand{\spaxos}{S-Paxos\xspace}
+\newcommand{\crane}{\textsc{Crane}\xspace}
 
 
 \newcommand{\aget}[0]{\v{aget}\xspace}
@@ -409,7 +409,7 @@ client connection and broke down their consensus latency on leader
 (Table~\ref{tab:traditional-latency}). From 3 to 9 replicas, the consensus 
 latency (the ``Latency'' column) of these protocols increased more gently than 
 that on 24 concurrent connections. For instance, when the number of replicas 
-increased from three to nine, ZooKeeper latency increased by 30.3\% with one 
+increased from three to nine, \zookeeper latency increased by 30.3\% with one 
 connection; this latency increased by 168.3\% with 24 connections (Figure 1). 
 This indicates that concurrent consensus requests are the major scalability 
 bottleneck for these protocols.
@@ -467,8 +467,8 @@ scalability in extant consensus protocols becomes even more pronounced.
 support unmodified server programs. To utilize existing \smr services, 
 developers often have to rewrite their code to orchestrate server programs into 
 the narrowly defined interfaces provided by these \smr systems. For instance, 
-to leverage ZooKeeper~\cite{zookeeper}, developers have to shoehorn their 
-programs into the file IO interface defined by ZooKeeper.
+to leverage \zookeeper~\cite{zookeeper}, developers have to shoehorn their 
+programs into the file IO interface defined by \zookeeper.
 
 \end{sloppypar}
 
