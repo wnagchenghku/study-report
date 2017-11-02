@@ -199,7 +199,7 @@ pdfdisplaydoctitle=true,
 \newcommand{\libpaxos}{libPaxos\xspace}
 \newcommand{\spaxos}{S-Paxos\xspace}
 \newcommand{\crane}{\textsc{Crane}\xspace}
-
+\newcommand{\dare}{DARE\xspace}
 
 \newcommand{\aget}[0]{\v{aget}\xspace}
 \newcommand{\pthread}[0]{\mbox{Pthreads}\xspace}
@@ -469,6 +469,22 @@ developers often have to rewrite their code to orchestrate server programs into
 the narrowly defined interfaces provided by these \smr systems. For instance, 
 to leverage \zookeeper~\cite{zookeeper}, developers have to shoehorn their 
 programs into the file IO interface defined by \zookeeper.
+
+Although there are some hardware-accelerated consensus 
+protocols~\cite{consensusbox:nsdi16,netpaxos:sosr15,specpaxos:nsdi15,
+nopaxos:osdi16} which are effective on reducing consensus latency, they are 
+either unsuitable for general server programs or are not designed to be 
+scalable on concurrent client connections. For instance, 
+\dare~\cite{dare:hpdc15}, a novel consensus protocol, achieves the lowest 
+consensus latency on a small number of client connections, but both its 
+evaluation shows that its consensus latency increases quickly when  
+more connections are added. Other recent 
+works~\cite{nopaxos:osdi16,specpaxos:nsdi15,netpaxos:sosr15} 
+leverage in-network serialization in a datacenter to safely skip 
+consensus if packets arrive at replicas in the same order. 
+These works require reconstructing a server program to use their new libraries 
+for checking the order of packets, so they are not designed to run legacy 
+server programs.
 
 \end{sloppypar}
 
