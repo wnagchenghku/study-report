@@ -353,6 +353,7 @@ pdfdisplaydoctitle=true,
 % \end{sloppypar}
 
 \begin{sloppypar}
+
 State machine replication (\smr) is a powerful fault-tolerance 
 concept~\cite{paxos:practical}. It runs replicas 
 of same program on multiple nodes. To keep the replicas consistent, it invokes a 
@@ -365,22 +366,10 @@ partition and packet loss.
 The fault-tolerant benefit of \smr makes it particularly an attractive 
 high-availability service for general server programs. Unfortunately, despite 
 much effort, existing \smr systems are still hard to deploy, mainly due to 
-three problems.
+three problems as elaborated below.
 
-\textbf{High consensus latency.} The consensus latency of traditional \paxos 
-protocols is notoriously high, incurring high performance overhead for server 
-programs. A main reason is that messages of traditional TCP or UDP-based \paxos 
-protocols have to go through OS kernel. For efficiency, \paxos protocols 
-typically take the Multi-Paxos approach~\cite{paxos:simple}: it assigns one 
-replica as the ``leader'' to invoke consensus requests, and the other replicas 
-as ``backups'' to agree on requests. To agree on an input, at least one 
-round-trip time (RTT) is required between the leader and a backup. Given that a 
-ping RTT in LAN typically takes hundreds of \us, and that the request processing 
-time of key-value store servers (\eg, \redis) is at most hundreds of \us, 
-existing \paxos protocols incur high overhead in the response time of server 
-programs.
-
-\textbf{Poor scalability.} The consensus latency of extant consensus protocols 
+\subsection*{Issue 1: Poor scalability}
+The consensus latency of extant consensus protocols 
 is often \emph{scale-limited}: it increases drastically when the number of 
 concurrent requests or replicas 
 increases~\cite{zookeeper,glendenning2011scalable}.
@@ -463,12 +452,32 @@ tend to deploy more replicas (\eg, Azure~\cite{azure:book} deploys seven or
 nine replicas) to support both replica failures and upgrades, the limited 
 scalability in extant consensus protocols becomes even more pronounced.
 
-\textbf{Hard to use.} Most existing \smr systems are not designed to 
+\subsection*{Issue 2: Hard to use}
+Most existing \smr systems are not designed to 
 support unmodified server programs. To utilize existing \smr services, 
 developers often have to rewrite their code to orchestrate server programs into 
 the narrowly defined interfaces provided by these \smr systems. For instance, 
 to leverage \zookeeper~\cite{zookeeper}, developers have to shoehorn their 
-programs into the file IO interface defined by \zookeeper.
+programs into the file IO interface defined by \zookeeper. As an another 
+example, in order to provide fault tolerance to a whole virtual machine, most 
+of the existing \smr systems need to modify the hypervisor code which can be 
+complex and error-prone.
+
+\subsection*{Issue 3: High Consensus Latency}
+
+The consensus latency of traditional \paxos 
+protocols is notoriously high, incurring high performance overhead for server 
+programs. A main reason is that messages of traditional TCP or UDP-based \paxos 
+protocols have to go through OS kernel. For efficiency, \paxos protocols 
+typically take the Multi-Paxos approach~\cite{paxos:simple}: it assigns one 
+replica as the ``leader'' to invoke consensus requests, and the other replicas 
+as ``backups'' to agree on requests. To agree on an input, at least one 
+round-trip time (RTT) is required between the leader and a backup. Given that a 
+ping RTT in LAN typically takes hundreds of \us, and that the request 
+processing 
+time of key-value store servers (\eg, \redis) is at most hundreds of \us, 
+existing \paxos protocols incur high overhead in the response time of server 
+programs.
 
 Although there are some hardware-accelerated consensus 
 protocols~\cite{consensusbox:nsdi16,netpaxos:sosr15,specpaxos:nsdi15,
@@ -476,7 +485,7 @@ nopaxos:osdi16} which are effective on reducing consensus latency, they are
 either unsuitable for general server programs or are not designed to be 
 scalable on concurrent client connections. For instance, 
 \dare~\cite{dare:hpdc15}, a novel consensus protocol, achieves the lowest 
-consensus latency on a small number of client connections, but both its 
+consensus latency on a small number of client connections, but its 
 evaluation shows that its consensus latency increases quickly when  
 more connections are added. Other recent 
 works~\cite{nopaxos:osdi16,specpaxos:nsdi15,netpaxos:sosr15} 
