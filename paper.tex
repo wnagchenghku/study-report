@@ -369,11 +369,23 @@ high-availability service for general server programs. Unfortunately, despite
 much effort, existing \smr systems are still hard to deploy, mainly due to 
 three problems as elaborated below.
 
-\subsection*{Issue 1: Poor scalability}
-The consensus latency of extant consensus protocols 
-is often \emph{scale-limited}: it increases drastically when the number of 
-concurrent requests or replicas 
-increases~\cite{zookeeper,glendenning2011scalable}.
+\subsection*{Issue 1: High Consensus Latency}
+
+The consensus latency of traditional \paxos 
+protocols is notoriously high, incurring high performance overhead for server 
+programs. A main reason is that messages of traditional TCP or UDP-based \paxos 
+protocols have to go through OS kernel. For efficiency, \paxos protocols 
+typically take the Multi-Paxos approach~\cite{paxos:simple}: it assigns one 
+replica as the ``leader'' to invoke consensus requests, and the other replicas 
+as ``backups'' to agree on requests. To agree on an input, at least one 
+round-trip time (RTT) is required between the leader and a backup. Given that a 
+ping RTT in LAN typically takes hundreds of \us, and that the request 
+processing 
+time of key-value store servers (\eg, \redis) is at most hundreds of \us, 
+existing \paxos protocols incur high overhead in the response time of server 
+programs.
+
+\subsection*{Issue 2: Poor scalability}
 
 \begin{figure*}[ht]
 \begin{center}
@@ -382,6 +394,11 @@ increases~\cite{zookeeper,glendenning2011scalable}.
 protocols ran a client with 24 concurrent connections.}\label{fig:paxos_latency}
 \end{center}
 \end{figure*}
+
+The consensus latency of extant consensus protocols 
+is often \emph{scale-limited}: it increases drastically when the number of 
+concurrent requests or replicas 
+increases~\cite{zookeeper,glendenning2011scalable}.
 
 To quantify this problem, we evaluated four traditional consensus 
 protocols~\cite{zookeeper, spaxos:srds12, crane:sosp15, libpaxos} on 24-core 
@@ -453,7 +470,7 @@ tend to deploy more replicas (\eg, Azure~\cite{azure:book} deploys seven or
 nine replicas) to support both replica failures and upgrades, the limited 
 scalability in extant consensus protocols becomes even more pronounced.
 
-\subsection*{Issue 2: Hard to use}
+\subsection*{Issue 3: Hard to use}
 Most existing \smr systems are not designed to 
 support unmodified server programs. To utilize existing \smr services, 
 developers often have to rewrite their code to orchestrate server programs into 
@@ -463,22 +480,6 @@ programs into the file IO interface defined by \zookeeper. As an another
 example, in order to provide fault tolerance to a whole virtual machine, most 
 of the existing \smr systems need to modify the hypervisor code which can be 
 complex and error-prone.
-
-\subsection*{Issue 3: High Consensus Latency}
-
-The consensus latency of traditional \paxos 
-protocols is notoriously high, incurring high performance overhead for server 
-programs. A main reason is that messages of traditional TCP or UDP-based \paxos 
-protocols have to go through OS kernel. For efficiency, \paxos protocols 
-typically take the Multi-Paxos approach~\cite{paxos:simple}: it assigns one 
-replica as the ``leader'' to invoke consensus requests, and the other replicas 
-as ``backups'' to agree on requests. To agree on an input, at least one 
-round-trip time (RTT) is required between the leader and a backup. Given that a 
-ping RTT in LAN typically takes hundreds of \us, and that the request 
-processing 
-time of key-value store servers (\eg, \redis) is at most hundreds of \us, 
-existing \paxos protocols incur high overhead in the response time of server 
-programs.
 
 Although there are some hardware-accelerated consensus 
 protocols~\cite{consensusbox:nsdi16,netpaxos:sosr15,specpaxos:nsdi15,
