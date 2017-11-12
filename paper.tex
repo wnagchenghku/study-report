@@ -97,7 +97,7 @@
 \newcommand{\xxx}[0]{\textsc{APUS}\xspace}
 \newcommand{\paxos}[0]{\textsc{Paxos}\xspace}
 \newcommand{\mytitle}[0]{\textbf {Problems on providing efficient fault 
-tolerance to server programs}}
+tolerance to \\ server programs}}
 \newcommand{\mykeywords}[0]{State Machine Replication, Fault Tolerance, Stable 
 and Deterministic Multithreading, Software Reliability}
 
@@ -476,10 +476,7 @@ support unmodified server programs. To utilize existing \smr services,
 developers often have to rewrite their code to orchestrate server programs into 
 the narrowly defined interfaces provided by these \smr systems. For instance, 
 to leverage \zookeeper~\cite{zookeeper}, developers have to shoehorn their 
-programs into the file IO interface defined by \zookeeper. As an another 
-example, in order to provide fault tolerance to a whole virtual machine, most 
-of the existing \smr systems need to modify the hypervisor code which can be 
-complex and error-prone.
+programs into the file IO interface defined by \zookeeper.
 
 Although there are some hardware-accelerated consensus 
 protocols~\cite{consensusbox:nsdi16,netpaxos:sosr15,specpaxos:nsdi15,
